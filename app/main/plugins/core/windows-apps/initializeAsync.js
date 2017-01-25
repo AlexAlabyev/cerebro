@@ -1,24 +1,30 @@
 import glob from 'glob';
-import { memoize } from 'cerebro-tools'
+import path from 'path'
+import fs from 'fs'
 
 const DIRECTORIES = [
-  path.join('C:\Program Files (x86)'),
-  path.join('C:\Program Files'),
+  'C:\\Program Files (x86)',
+  'C:\\Program Files',
 ]
 
 const CACHE_TIME = 30 * 60 * 1000
 
-const appsFinder = (onFileFound) => {
+const getAppsList = (onFound) => {
   DIRECTORIES.forEach(dir => {
-    glob.readdirStream(`${dir}\**\*.exe`, {}).on('data', onFileFound)
+    glob(`${dir}\\**\\*.exe`, {}, onFound)
   })
 }
 
-const getAppsList = memoize(getAppsFinder(DIRECTORIES))
+const formatPath = (filePath) => ({
+  path: filePath,
+  filename: path.basename(filePath),
+  name: path.basename(filePath).replace(/\.exe/, ''),
+})
 
 export default (callback) => {
-  const searchApps = () => getAppsList(file => {
-    console.log(file)
+  const searchApps = () => getAppsList((err, files) => {
+    const apps = files.map(formatPath)
+    callback(apps)
   })
 
   // Force recache before expiration
@@ -27,6 +33,6 @@ export default (callback) => {
 
   // recache apps when apps directories changed
   DIRECTORIES.forEach(dir => {
-    fs.watch(dir, WATCH_OPTIONS, recache)
+    fs.watch(dir, {}, searchApps)
   })
 }

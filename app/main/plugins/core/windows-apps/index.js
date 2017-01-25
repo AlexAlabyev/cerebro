@@ -29,8 +29,8 @@ const appsPlugin = ({ term, actions, display }) => {
 
 export default {
   fn: appsPlugin,
-  initialize: initializeAsync,
-  onMessage: (app) => {
-    appsList = uniq([...appsList, app])
+  initializeAsync,
+  onMessage: (apps) => {
+    appsList = uniq([...appsList, ...apps])
   }
 }
